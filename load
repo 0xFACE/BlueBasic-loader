@@ -1,6 +1,29 @@
 #!/bin/bash
-MAC=20:C3:8F:F2:C1:7F
-while read in; do
-HEX=$(echo "`echo $in | hexdump -vC |  awk 'BEGIN {IFS="\t"} {$1=""; print }' | awk '{sub(/\|.*/,"")}1'  | tr -d '\n' | tr -d ' '`" | rev | cut -c 3- | rev)
-gatttool -i hci0 -b $MAC --char-write-req -a 0x0031 -n $HEX"0d"
-done < $1
+
+mac_address="$1"
+file="$2"
+
+function load() {
+  while read line; do
+    line=$(printf '%s\r' "$line" | xxd -p | tr -d '\n')
+    echo gatttool -i hci0 -b "$mac_address" --char-write-req -a 0x0031 -n $line # @0xFACE: Remove echo when done
+  done < $file
+}
+
+if [[ ! "$mac_address" =~ ^([a-fA-F0-9]{2}:){5}[a-zA-Z0-9]{2}$ ]]; then
+  error="Wrong MAC address! Example: AA:BB:CC:DD:EE:FF"
+elif [[ ! -r $file && -f $file ]]; then
+  error="No such file!"
+else
+  load
+  exit
+fi
+
+cat <<- EOH
+  $error
+
+  Usage: $0 <MAC address> <file>
+
+  This tool will upload the file to the BlueBasic device that has that MAC address
+  Fixme: I can't properly document a script, please fix it before commiting to Master branch.
+EOH
