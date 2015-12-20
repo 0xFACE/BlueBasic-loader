@@ -1,0 +1,6 @@
+#!/bin/bash
+MAC=20:C3:8F:F2:C1:7F
+while read in; do
+HEX=$(echo "`echo $in | hexdump -vC |  awk 'BEGIN {IFS="\t"} {$1=""; print }' | awk '{sub(/\|.*/,"")}1'  | tr -d '\n' | tr -d ' '`" | rev | cut -c 3- | rev)
+gatttool -i hci0 -b $MAC --char-write-req -a 0x0031 -n $HEX"0d"
+done < $1
