@@ -3,4 +3,4 @@ A (only?) option to upload the basic code for non-OSX world.
 
 Usage:
 ==================
-load script.bas
+load FA:CE:FA:CE:FA:CE script.bas
