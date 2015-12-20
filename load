@@ -6,7 +6,7 @@ file="$2"
 function load() {
   while read line; do
     line=$(printf '%s\r' "$line" | xxd -p | tr -d '\n')
-    gatttool -i hci0 -b "$mac_address" --char-write-req -a 0x0031 -n $line # @0xFACE: Remove echo when done
+    gatttool -i hci0 -b "$mac_address" --char-write-req -a 0x0031 -n $line
   done < $file
 }
 
@@ -25,5 +25,5 @@ cat <<- EOH
   Usage: $0 <MAC address> <file>
 
   This tool will upload the file to the BlueBasic device that has that MAC address
-  Fixme: I can't properly document a script, please fix it before commiting to Master branch.
+  Need gatttool installed
 EOH
