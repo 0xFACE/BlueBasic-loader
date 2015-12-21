@@ -3,4 +3,4 @@ A (only?) option to upload the basic code for non-OSX world.
 
 Usage:
 ==================
-load <MAC address> <file>
+load &lt;MAC address&gt; &lt;file&gt;
