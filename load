@@ -21,6 +21,10 @@ function load() {
              -a 0x0031 \
              -b "$mac_address" \
              --char-write-req  1>/dev/null
+    if [[ $? != 0 ]]; then
+      echo "Error uploading."
+      exit 1
+    fi
     ((counter++))
     percentage="$(bc <<< "scale=2; (${counter}/${lines})*100")"
     progress_bar "${percentage%.*}"
@@ -34,7 +38,7 @@ elif ! [[ -r $file && -f $file ]]; then
   error="No such file!"
 else
   load
-  exit
+  exit 0
 fi
 
 cat <<- EOH
@@ -45,3 +49,5 @@ cat <<- EOH
   This tool will upload the file to the BlueBasic device that has that MAC address
   Need gatttool installed
 EOH
+
+exit 1
