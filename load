@@ -16,15 +16,17 @@ function load() {
   progress_bar 0
   while read line; do
     line=$(printf '%s\r' "$line" | xxd -p | tr -d '\n')
-    gatttool -i hci0 \
-             -n $line \
+    for ((index=0; index<${#string}; index+=180)); do
+      result=$(gatttool -i hci0 \
+             -n ${string:index:180} \
              -a 0x0031 \
              -b "$mac_address" \
-             --char-write-req  1>/dev/null
-    if [[ $? != 0 ]]; then
-      echo "Error uploading."
-      exit 1
-    fi
+             --char-write-req 2>&1)
+      if [[ "$result" != "Characteristic value was written successfully" ]]; then
+        printf "\n%s\n" "$result"
+        exit 1
+      fi
+    done
     ((counter++))
     percentage="$(bc <<< "scale=2; (${counter}/${lines})*100")"
     progress_bar "${percentage%.*}"
