@@ -20,7 +20,7 @@ function load() {
              -n $line \
              -a 0x0031 \
              -b "$mac_address" \
-             --char-write-req  1>/dev/null)
+             --char-write-req 2>&1)
     if [[ "$result" != "Characteristic value was written successfully" ]]; then
       printf "\n%s\n" "$result"
       exit 1
