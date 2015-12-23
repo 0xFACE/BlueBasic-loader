@@ -16,9 +16,9 @@ function load() {
   progress_bar 0
   while read line; do
     line=$(printf '%s\r' "$line" | xxd -p | tr -d '\n')
-    for ((index=0; index<${#string}; index+=180)); do
+    for ((index=0; index<${#line}; index+=180)); do
       result=$(gatttool -i hci0 \
-             -n ${string:index:180} \
+             -n ${line:index:180} \
              -a 0x0031 \
              -b "$mac_address" \
              --char-write-req 2>&1)
