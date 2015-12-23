@@ -22,7 +22,7 @@ function load() {
              -b "$mac_address" \
              --char-write-req  1>/dev/null)
     if [[ "$result" != "Characteristic value was written successfully" ]]; then
-      echo "$result"
+      printf "\n%s\n" "$result"
       exit 1
     fi
     ((counter++))
