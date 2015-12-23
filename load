@@ -16,13 +16,13 @@ function load() {
   progress_bar 0
   while read line; do
     line=$(printf '%s\r' "$line" | xxd -p | tr -d '\n')
-    gatttool -i hci0 \
+    result=$(gatttool -i hci0 \
              -n $line \
              -a 0x0031 \
              -b "$mac_address" \
-             --char-write-req  1>/dev/null
-    if [[ $? != 0 ]]; then
-      echo "Error uploading."
+             --char-write-req  1>/dev/null)
+    if [[ "$result" != "Characteristic value was written successfully" ]]; then
+      echo "$result"
       exit 1
     fi
     ((counter++))
