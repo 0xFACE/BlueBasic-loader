@@ -1,8 +1,20 @@
 #!/bin/bash
 
-
 mac_address="$1"
 file="$2"
+
+
+function error() {
+  cat <<- EOH
+    $1
+
+    Usage: $0 <MAC address> <file>
+
+    This tool will upload the file to the BlueBasic device that has that MAC address
+    Need gatttool installed
+	EOH
+  exit 1
+}
 
 
 function upload_progress() {
@@ -35,6 +47,8 @@ function load() {
     chunks+=("${hexdump:chunk:180}")
   done
 
+  upload_progress 0
+
   for chunk in ${!chunks[@]}; do
     result="$(gatttool -i hci0 \
                             -a 0x0031 \
@@ -49,29 +63,14 @@ function load() {
       exit 1
     fi
   done
-
   printf "\n"
-  exit 0
 }
 
 
-if [[ ! "$mac_address" =~ ^([a-fA-F0-9]{2}:){5}[a-zA-Z0-9]{2}$ ]]; then
-  error="Wrong MAC address! Example: AA:BB:CC:DD:EE:FF"
+if ! [[ "$mac_address" =~ ^([a-fA-F0-9]{2}:){5}[a-zA-Z0-9]{2}$ ]]; then
+  error "Wrong MAC address! Example: AA:BB:CC:DD:EE:FF"
 elif ! [[ -r $file && -f $file ]]; then
-  error="No such file!"
+  error "No such file!"
 else
   load
 fi
-
-
-cat <<- EOH
-  $error
-
-  Usage: $0 <MAC address> <file>
-
-  This tool will upload the file to the BlueBasic device that has that MAC address
-  Need gatttool installed
-EOH
-
-
-exit 1
