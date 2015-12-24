@@ -1,38 +1,59 @@
 #!/bin/bash
 
+
 mac_address="$1"
 file="$2"
 
-function progress_bar() {
+
+function upload_progress() {
   progress_character='='
-  percent_bar="$(head -c "$(($1/5))" < /dev/zero | tr '\0' $progress_character)"
-  percent_bar="${percent_bar}$(printf "%$((20-($1/5)))s")"
-  printf "\rLoading... [%s] (%s%%)" "$percent_bar" "$1"
+  progress_length=20
+
+  progress_step=$((100/progress_length))
+
+  if (($1 >= progress_step)); then
+    percent_bar="$(head -c "$(($1/progress_step))" < /dev/zero | tr '\0' $progress_character)"
+    percent_bar="${percent_bar}$(printf "%$((progress_length-($1/progress_step)))s")"
+  else
+    percent_bar="$(printf "%${progress_length}s")"
+  fi
+
+  printf "\rUploading... [%s] (%s%%)" "$percent_bar" "$1"
 }
 
+
 function load() {
-  counter=0
-  lines=$(wc -l <$file)
-  progress_bar 0
+  hexdump=""
+  chunks=()
+
   while read line; do
     line=$(printf '%s\r' "$line" | xxd -p | tr -d '\n')
-    for ((index=0; index<${#line}; index+=180)); do
-      result=$(gatttool -i hci0 \
-             -n ${line:index:180} \
-             -a 0x0031 \
-             -b "$mac_address" \
-             --char-write-req 2>&1)
-      if [[ "$result" != "Characteristic value was written successfully" ]]; then
-        printf "\n%s\n" "$result"
-        exit 1
-      fi
-    done
-    ((counter++))
-    percentage="$(bc <<< "scale=2; (${counter}/${lines})*100")"
-    progress_bar "${percentage%.*}"
+    hexdump+="$line"
   done < $file
+
+  for ((chunk=0; chunk<${#hexdump}; chunk+=180)); do
+    chunks+=("${hexdump:chunk:180}")
+  done
+
+  for chunk in ${!chunks[@]}; do
+    result="$(gatttool -i hci0 \
+                            -a 0x0031 \
+                            -b "$mac_address" \
+                            -n "${chunks[chunk]}" \
+                            --char-write-req 2>&1)"
+    if [[ "$result" == "Characteristic value was written successfully" ]]; then
+      percentage=$(bc <<< "scale=2; ($((chunk+1))/${#chunks[@]})*100")
+      upload_progress "${percentage%.*}"
+    else
+      printf "\n%s\n" "$result"
+      exit 1
+    fi
+  done
+
   printf "\n"
+  exit 0
 }
+
 
 if [[ ! "$mac_address" =~ ^([a-fA-F0-9]{2}:){5}[a-zA-Z0-9]{2}$ ]]; then
   error="Wrong MAC address! Example: AA:BB:CC:DD:EE:FF"
@@ -40,8 +61,8 @@ elif ! [[ -r $file && -f $file ]]; then
   error="No such file!"
 else
   load
-  exit 0
 fi
+
 
 cat <<- EOH
   $error
@@ -51,5 +72,6 @@ cat <<- EOH
   This tool will upload the file to the BlueBasic device that has that MAC address
   Need gatttool installed
 EOH
+
 
 exit 1
