@@ -5,4 +5,4 @@ Needs <b>gatttool</b> from bluez package.
 
 Usage:
 ==================
-load &lt;MAC address&gt; &lt;file&gt;
+bbload &lt;MAC address&gt; &lt;file&gt;
