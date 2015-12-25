@@ -51,10 +51,10 @@ function load() {
 
   for chunk in ${!chunks[@]}; do
     result="$(gatttool -i hci0 \
-                            -a 0x0031 \
-                            -b "$mac_address" \
-                            -n "${chunks[chunk]}" \
-                            --char-write-req 2>&1)"
+                       -a 0x0031 \
+                       -b "$mac_address" \
+                       -n "${chunks[chunk]}" \
+                       --char-write-req 2>&1)"
     if [[ "$result" == "Characteristic value was written successfully" ]]; then
       percentage=$(bc <<< "scale=2; ($((chunk+1))/${#chunks[@]})*100")
       upload_progress "${percentage%.*}"
