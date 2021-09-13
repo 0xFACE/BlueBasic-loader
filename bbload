@@ -2,7 +2,7 @@
 
 mac_address="$1"
 file="$2"
-
+handle="0x0021"
 
 function error() {
   cat <<- EOH
@@ -37,21 +37,29 @@ function upload_progress() {
 function load() {
   hexdump=""
   chunks=()
+  eol=13
 
   while read line; do
     line=$(printf '%s\r' "$line" | xxd -p | tr -d '\n')
     hexdump+="$line"
   done < $file
 
-  for ((chunk=0; chunk<${#hexdump}; chunk+=180)); do
-    chunks+=("${hexdump:chunk:180}")
+  length=(${#hexdump})
+  for ((chunk=0; chunk<length; )); do
+    byte=0
+    buffer=""
+    for ((count=0; ((chunk<length && byte != eol && count < 20)); count++, chunk+=2)); do
+      byte=("0x${hexdump:chunk:2}")
+      buffer+="${hexdump:chunk:2}"
+    done
+    chunks+=("$buffer")
   done
 
   upload_progress 0
 
   for chunk in ${!chunks[@]}; do
     result="$(gatttool -i hci0 \
-                       -a 0x0031 \
+                       -a "$handle" \
                        -b "$mac_address" \
                        -n "${chunks[chunk]}" \
                        --char-write-req 2>&1)"
@@ -72,5 +80,6 @@ if ! [[ "$mac_address" =~ ^([a-fA-F0-9]{2}:){5}[a-zA-Z0-9]{2}$ ]]; then
 elif ! [[ -r $file && -f $file ]]; then
   error "No such file!"
 else
+  printf "using handle %s\n" "$handle"
   load
 fi
